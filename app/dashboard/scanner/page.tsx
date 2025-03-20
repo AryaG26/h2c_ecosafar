@@ -12,6 +12,8 @@ export default function ScannerPage() {
   const [barcode, setBarcode] = useState("");
   const [product, setProduct] = useState(null);
   const [alternatives, setAlternatives] = useState([]);
+  const [selectedAlternative, setSelectedAlternative] = useState(null);
+  const [carbonReduction, setCarbonReduction] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingAlternatives, setIsFetchingAlternatives] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -27,6 +29,8 @@ export default function ScannerPage() {
     setIsLoading(true);
     setProduct(null);
     setAlternatives([]);
+    setSelectedAlternative(null);
+    setCarbonReduction(null);
 
     try {
       const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcodeValue}.json`);
@@ -62,20 +66,22 @@ export default function ScannerPage() {
 
   const fetchAlternativeProducts = async () => {
     if (!product?.category) return;
-  
+
     setIsFetchingAlternatives(true);
     setAlternatives([]);
-  
+    setSelectedAlternative(null);
+    setCarbonReduction(null);
+
     try {
       const response = await fetch(
         `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(product.category)}&json=true`
       );
       const data = await response.json();
-  
+
       if (data.products) {
         const betterOptions = data.products
           .filter((prod) => prod.ecoscore_grade?.toUpperCase() === "A" || prod.ecoscore_grade?.toUpperCase() === "B")
-          .slice(0, 3) // Get 2-3 alternatives
+          .slice(0, 3)
           .map((prod) => ({
             name: prod.product_name || "Unknown",
             brand: prod.brands || "Unknown",
@@ -85,18 +91,31 @@ export default function ScannerPage() {
             carbonFootprint:
               prod.ecoscore_data?.agribalyse?.carbon_footprint ||
               prod.ecoscore_data?.agribalyse?.co2_total ||
-              "N/A", // Extract alternative carbon footprint values
+              "N/A",
           }));
-  
+
         setAlternatives(betterOptions.length > 0 ? betterOptions : [{ name: "No greener alternatives found." }]);
       }
     } catch (error) {
       console.error("Error fetching alternatives:", error);
     }
-  
+
     setIsFetchingAlternatives(false);
   };
-  
+
+  const calculateCarbonReduction = () => {
+    if (!product || !selectedAlternative) return;
+
+    const originalCarbon = parseFloat(product.lifeCycleAnalysis) || 0;
+    const alternativeCarbon = parseFloat(selectedAlternative.carbonFootprint) || 0;
+
+    if (originalCarbon === 0 || alternativeCarbon === 0) {
+      setCarbonReduction("N/A");
+    } else {
+      const reduction = originalCarbon - alternativeCarbon;
+      setCarbonReduction(reduction.toFixed(2));
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -116,7 +135,6 @@ export default function ScannerPage() {
               <Camera className="h-4 w-4" /> {scanning ? "Stop Scan" : "Scan"}
             </Button>
           </div>
-
           {scanning && (
             <div className="mt-4 border p-2 rounded-lg">
               <BarcodeScannerComponent
@@ -136,6 +154,7 @@ export default function ScannerPage() {
           )}
 
           {isLoading && <p className="mt-2 text-sm">Fetching product details...</p>}
+
 
           {product && (
             <div className="mt-4 border p-4 rounded-lg">
@@ -166,7 +185,11 @@ export default function ScannerPage() {
             <div className="mt-4 border p-4 rounded-lg">
               <h3 className="font-bold">♻ Cleaner Alternatives</h3>
               {alternatives.map((alt, index) => (
-                <div key={index} className="mt-2 p-2 border rounded-lg">
+                <div
+                  key={index}
+                  className={`mt-2 p-2 border rounded-lg cursor-pointer ${selectedAlternative === alt ? "border-green-500" : ""}`}
+                  onClick={() => setSelectedAlternative(alt)}
+                >
                   <p className="font-bold">{alt.name}</p>
                   <p className="text-sm">{alt.brand}</p>
                   <p className="text-sm">📊 Impact Grade: {alt.impactGrade}</p>
@@ -176,6 +199,16 @@ export default function ScannerPage() {
                 </div>
               ))}
             </div>
+          )}
+
+          {selectedAlternative && (
+            <Button onClick={calculateCarbonReduction} className="mt-4">
+              Calculate Carbon Reduction
+            </Button>
+          )}
+
+          {carbonReduction !== null && (
+            <p className="mt-2 text-sm font-bold">🌍 Carbon Emission Reduction: {carbonReduction} kg CO₂e</p>
           )}
         </CardContent>
       </Card>
