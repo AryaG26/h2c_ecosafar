@@ -11,72 +11,92 @@ import BarcodeScannerComponent from "react-qr-barcode-scanner";
 export default function ScannerPage() {
   const [barcode, setBarcode] = useState("");
   const [product, setProduct] = useState(null);
+  const [alternatives, setAlternatives] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingAlternatives, setIsFetchingAlternatives] = useState(false);
   const [scanning, setScanning] = useState(false);
   const { toast } = useToast();
 
   const fetchProductData = async (scannedBarcode) => {
     const barcodeValue = scannedBarcode || barcode;
-
     if (!barcodeValue) {
-      toast({
-        title: "No barcode entered",
-        description: "Please enter a barcode or scan one.",
-        variant: "destructive",
-      });
+      toast({ title: "No barcode entered", description: "Please enter or scan a barcode.", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
     setProduct(null);
+    setAlternatives([]);
 
     try {
       const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcodeValue}.json`);
       const data = await response.json();
 
       if (data.status === 0) {
-        setProduct({ error: "Sorry, no data found." });
-        toast({
-          title: "Product not found",
-          description: "This barcode is not available in the Open Food Facts database.",
-          variant: "destructive",
-        });
+        setProduct({ error: "No product data found." });
+        toast({ title: "Product not found", description: "This barcode does not exist.", variant: "destructive" });
       } else {
         const ecoData = data.product.ecoscore_data?.agribalyse || {};
-        const equivalentTo = data.product.ecoscore_data?.co2_eq?.equivalent_to || 
-                             data.product.ecoscore_data?.co2_eq_label || 
-                             "Data Not Available";
+        const impactGrade = data.product.ecoscore_grade?.toUpperCase() || "N/A";
 
-        const productInfo = {
+        setProduct({
           name: data.product.product_name || "Data Not Available",
           brand: data.product.brands || "Data Not Available",
           category: data.product.categories || "Data Not Available",
           image: data.product.image_url || "/placeholder.svg",
-          greenScore: data.product.ecoscore_score || "Data Not Available",
-          impactGrade: data.product.ecoscore_grade?.toUpperCase() || "Data Not Available",
-          carbonFootprint: ecoData.carbon_footprint || "Data Not Available",
-          lifeCycleAnalysis: ecoData.co2_total || "Data Not Available",
-          carbonEquivalent: equivalentTo,
-        };
-
-        setProduct(productInfo);
-        toast({
-          title: "Product Found",
-          description: `Details for ${productInfo.name} retrieved successfully.`,
+          greenScore: data.product.ecoscore_score || "N/A",
+          impactGrade: impactGrade,
+          carbonFootprint: ecoData.carbon_footprint || "N/A",
+          lifeCycleAnalysis: ecoData.co2_total || "N/A",
         });
+
+        toast({ title: "Product Found", description: `Details for ${data.product.product_name} retrieved.` });
       }
     } catch (error) {
       console.error("Error fetching product:", error);
-      setProduct({ error: "Sorry, data not present" });
-      toast({
-        title: "Error",
-        description: "An error occurred while fetching the product data.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to fetch product data.", variant: "destructive" });
     }
 
     setIsLoading(false);
   };
+
+  const fetchAlternativeProducts = async () => {
+    if (!product?.category) return;
+  
+    setIsFetchingAlternatives(true);
+    setAlternatives([]);
+  
+    try {
+      const response = await fetch(
+        `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(product.category)}&json=true`
+      );
+      const data = await response.json();
+  
+      if (data.products) {
+        const betterOptions = data.products
+          .filter((prod) => prod.ecoscore_grade?.toUpperCase() === "A" || prod.ecoscore_grade?.toUpperCase() === "B")
+          .slice(0, 3) // Get 2-3 alternatives
+          .map((prod) => ({
+            name: prod.product_name || "Unknown",
+            brand: prod.brands || "Unknown",
+            image: prod.image_url || "/placeholder.svg",
+            impactGrade: prod.ecoscore_grade?.toUpperCase() || "Unknown",
+            greenScore: prod.ecoscore_score || "N/A",
+            carbonFootprint:
+              prod.ecoscore_data?.agribalyse?.carbon_footprint ||
+              prod.ecoscore_data?.agribalyse?.co2_total ||
+              "N/A", // Extract alternative carbon footprint values
+          }));
+  
+        setAlternatives(betterOptions.length > 0 ? betterOptions : [{ name: "No greener alternatives found." }]);
+      }
+    } catch (error) {
+      console.error("Error fetching alternatives:", error);
+    }
+  
+    setIsFetchingAlternatives(false);
+  };
+  
 
   return (
     <div className="flex flex-col gap-4">
@@ -88,11 +108,7 @@ export default function ScannerPage() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
-            <Input
-              placeholder="Enter barcode number"
-              value={barcode}
-              onChange={(e) => setBarcode(e.target.value)}
-            />
+            <Input placeholder="Enter barcode number" value={barcode} onChange={(e) => setBarcode(e.target.value)} />
             <Button onClick={() => fetchProductData()} disabled={isLoading}>
               <Search className="h-4 w-4" /> Search
             </Button>
@@ -113,9 +129,7 @@ export default function ScannerPage() {
                     fetchProductData(result.text);
                   }
                 }}
-                videoConstraints={{
-                  facingMode: "environment", // Use the back camera
-                }}
+                videoConstraints={{ facingMode: "environment" }}
                 className="mirrored-video"
               />
             </div>
@@ -139,15 +153,32 @@ export default function ScannerPage() {
               )}
             </div>
           )}
+
+          {product && !product.error && (
+            <Button onClick={fetchAlternativeProducts} className="mt-4">
+              ♻ Show Greener Alternatives
+            </Button>
+          )}
+
+          {isFetchingAlternatives && <p className="mt-2 text-sm">Fetching alternative products...</p>}
+
+          {alternatives.length > 0 && (
+            <div className="mt-4 border p-4 rounded-lg">
+              <h3 className="font-bold">♻ Cleaner Alternatives</h3>
+              {alternatives.map((alt, index) => (
+                <div key={index} className="mt-2 p-2 border rounded-lg">
+                  <p className="font-bold">{alt.name}</p>
+                  <p className="text-sm">{alt.brand}</p>
+                  <p className="text-sm">📊 Impact Grade: {alt.impactGrade}</p>
+                  <p className="text-sm">🌱 Green Score: {alt.greenScore}</p>
+                  <p className="text-sm">♻ Carbon Footprint: {alt.carbonFootprint} kg CO₂e</p>
+                  <img src={alt.image} alt={alt.name} className="w-24 h-24 mt-2" />
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* CSS for Flipping the Video Feed */}
-      <style jsx>{`
-        .mirrored-video video {
-          transform: scaleX(-1); /* Flip the video horizontally */
-        }
-      `}</style>
     </div>
   );
 }
