@@ -14,12 +14,16 @@ const defaultEmissionFactors = {
 const ElectricityBillCalculator = () => {
   const [file, setFile] = useState<File | null>(null);
   const [extractedInfo, setExtractedInfo] = useState({
+  const [extractedInfo, setExtractedInfo] = useState({
     name: null,
     billDate: null,
     billedUnits: null,
   });
   const [manualUnits, setManualUnits] = useState<number | null>(null);
+  const [manualUnits, setManualUnits] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [region, setRegion] = useState('global');
+  const [customEmissionFactor, setCustomEmissionFactor] = useState<number | null>(null);
   const [region, setRegion] = useState('global');
   const [customEmissionFactor, setCustomEmissionFactor] = useState<number | null>(null);
 
@@ -34,7 +38,11 @@ const ElectricityBillCalculator = () => {
     const billDateRegex = /Bill Date:\s*(\d{2}\.\d{2}\.\d{4})/i;
     const billedUnitsRegex = /Billed Units\s*:\s*(\d+)/i;
 
+
     return {
+      name: text.match(nameRegex)?.[1]?.trim() || null,
+      billDate: text.match(billDateRegex)?.[1] || null,
+      billedUnits: text.match(billedUnitsRegex) ? parseInt(text.match(billedUnitsRegex)[1]) : null,
       name: text.match(nameRegex)?.[1]?.trim() || null,
       billDate: text.match(billDateRegex)?.[1] || null,
       billedUnits: text.match(billedUnitsRegex) ? parseInt(text.match(billedUnitsRegex)[1]) : null,
@@ -47,7 +55,10 @@ const ElectricityBillCalculator = () => {
     try {
       const { data: { text } } = await Tesseract.recognize(file, 'eng');
       setExtractedInfo(extractElectricityUsage(text));
+      const { data: { text } } = await Tesseract.recognize(file, 'eng');
+      setExtractedInfo(extractElectricityUsage(text));
     } catch (error) {
+      alert('Error processing the bill.');
       alert('Error processing the bill.');
     } finally {
       setLoading(false);
@@ -57,7 +68,13 @@ const ElectricityBillCalculator = () => {
   const billedUnits = extractedInfo.billedUnits ?? manualUnits;
   const emissionFactor = customEmissionFactor ?? defaultEmissionFactors[region];
   const carbonFootprint = billedUnits ? billedUnits * emissionFactor : null;
+  const billedUnits = extractedInfo.billedUnits ?? manualUnits;
+  const emissionFactor = customEmissionFactor ?? defaultEmissionFactors[region];
+  const carbonFootprint = billedUnits ? billedUnits * emissionFactor : null;
   const recommendations = [
+    'Switch to LED bulbs to save energy.',
+    'Use energy-efficient appliances.',
+    'Consider installing solar panels.',
     'Switch to LED bulbs to save energy.',
     'Use energy-efficient appliances.',
     'Consider installing solar panels.',

@@ -21,6 +21,7 @@ const items = [
     title: "Electricity",
     href: "/dashboard/electricity",
     icon: Leaf,
+    icon: Leaf,
   },
   {
     title: "Scanner",
