@@ -41,7 +41,7 @@ export default function LoginPage() {
         console.log("Saved token:", localStorage.getItem("token"));  // Save token to localStorage
         toast({
           title: "Login successful",
-          description: "Welcome back to EcoTrack!",
+          description: "Welcome back to EcoSafar!",
         });
   
         setTimeout(() => {
@@ -73,7 +73,7 @@ export default function LoginPage() {
       await signInWithGoogle()
       toast({
         title: "Login successful",
-        description: "Welcome back to EcoTrack!",
+        description: "Welcome back to EcoSafar!",
       })
       router.push("/dashboard")
     } catch (error) {
@@ -91,7 +91,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4">
       <Link href="/" className="absolute left-8 top-8 flex items-center gap-2">
         <Leaf className="h-6 w-6 text-primary" />
-        <span className="text-xl font-bold">EcoTrack</span>
+        <span className="text-xl font-bold">EcoSafar</span>
       </Link>
 
       <Card className="w-full max-w-md animate-fade-in">

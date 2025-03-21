@@ -48,11 +48,7 @@ const items = [
     icon: Users,
   },
   
-  {
-    title: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
-  },
+ 
 ]
 
 export function DashboardNav() {

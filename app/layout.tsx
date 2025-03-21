@@ -9,8 +9,8 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "EcoTrack - Carbon Footprint Tracker",
-  description: "Track and reduce your carbon footprint with EcoTrack",
+  title: "EcoSafar - Carbon Footprint Tracker",
+  description: "Track and reduce your carbon footprint with EcoSafar",
     generator: 'v0.dev'
 }
 
