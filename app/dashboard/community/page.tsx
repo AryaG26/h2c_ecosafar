@@ -14,6 +14,7 @@ interface Event {
 }
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY; // Ensure this is in your .env.local file
+const PREDICTHQ_API_TOKEN = process.env.NEXT_PUBLIC_PREDICTHQ_API_TOKEN;
 const libraries: any = ["places"];
 
 export default function CommunityPage() {
