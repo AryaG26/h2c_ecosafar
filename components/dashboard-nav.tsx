@@ -18,8 +18,8 @@ const items = [
     icon: MapPin,
   },
   {
-    title: "Products",
-    href: "/dashboard/products",
+    title: "Electricity",
+    href: "/dashboard/electricity",
     icon: ShoppingBag,
   },
   {
@@ -47,6 +47,7 @@ const items = [
     href: "/dashboard/community",
     icon: Users,
   },
+  
   {
     title: "Settings",
     href: "/dashboard/settings",

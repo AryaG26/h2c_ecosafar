@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = "mongodb://127.0.0.1:27017/carbonTrackerDB";  // Replace with your MongoDB Compass connection string if different
+const MONGODB_URI = "mongodb+srv://samgawde73:pass123@ecosafar.rz84s.mongodb.net/";  // Replace with your MongoDB Compass connection string if different
 
 if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
