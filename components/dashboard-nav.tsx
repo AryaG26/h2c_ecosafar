@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { BarChart3, Home, Leaf, MapPin, QrCode, Settings, ShoppingBag, Trophy, Users } from "lucide-react"
+import { BarChart3, Home, Leaf, MapPin, QrCode, Settings, Trophy, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 

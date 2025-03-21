@@ -25,44 +25,55 @@ export default function ScannerPage() {
       toast({ title: "No barcode entered", description: "Please enter or scan a barcode.", variant: "destructive" });
       return;
     }
-
+  
     setIsLoading(true);
     setProduct(null);
     setAlternatives([]);
     setSelectedAlternative(null);
     setCarbonReduction(null);
-
+  
     try {
       const response = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcodeValue}.json`);
       const data = await response.json();
-
+  
       if (data.status === 0) {
         setProduct({ error: "No product data found." });
         toast({ title: "Product not found", description: "This barcode does not exist.", variant: "destructive" });
       } else {
         const ecoData = data.product.ecoscore_data?.agribalyse || {};
         const impactGrade = data.product.ecoscore_grade?.toUpperCase() || "N/A";
-
-        setProduct({
+  
+        const productData = {
+          barcode: barcodeValue,
           name: data.product.product_name || "Data Not Available",
           brand: data.product.brands || "Data Not Available",
           category: data.product.categories || "Data Not Available",
           image: data.product.image_url || "/placeholder.svg",
           greenScore: data.product.ecoscore_score || "N/A",
           impactGrade: impactGrade,
-          carbonFootprint: ecoData.carbon_footprint || "N/A",
-          lifeCycleAnalysis: ecoData.co2_total || "N/A",
-        });
-
+          carbonFootprint: ecoData.co2_total || "N/A",
+        };
+  
+        setProduct(productData);
         toast({ title: "Product Found", description: `Details for ${data.product.product_name} retrieved.` });
+  
+        // Send product data to MongoDB
+        await fetch("/api/saveProduct", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productData),
+        });
+  
+        toast({ title: "Saved", description: "Product data stored in database." });
       }
     } catch (error) {
       console.error("Error fetching product:", error);
       toast({ title: "Error", description: "Failed to fetch product data.", variant: "destructive" });
     }
-
+  
     setIsLoading(false);
   };
+  
 
   const fetchAlternativeProducts = async () => {
     if (!product?.category) return;
@@ -106,7 +117,7 @@ export default function ScannerPage() {
   const calculateCarbonReduction = () => {
     if (!product || !selectedAlternative) return;
 
-    const originalCarbon = parseFloat(product.lifeCycleAnalysis) || 0;
+    const originalCarbon = parseFloat(product.carbonFootprint) || 0;
     const alternativeCarbon = parseFloat(selectedAlternative.carbonFootprint) || 0;
 
     if (originalCarbon === 0 || alternativeCarbon === 0) {
@@ -166,7 +177,7 @@ export default function ScannerPage() {
                   <p className="text-sm">{product.brand} - {product.category}</p>
                   <p className="text-sm">🌱 Green Score: {product.greenScore}</p>
                   <p className="text-sm">📊 Impact Grade: {product.impactGrade}</p>
-                  <p className="text-sm">♻ Carbon Footprint: {product.lifeCycleAnalysis} kg CO₂e</p>
+                  <p className="text-sm">♻ Carbon Footprint: {product.carbonFootprint} kg CO₂e</p>
                   <img src={product.image} alt={product.name} className="w-24 h-24 mt-2" />
                 </>
               )}
