@@ -50,11 +50,11 @@ export default function DashboardLayout({
       <header className="sticky top-0 z-50 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
         <div className="flex items-center gap-2 md:hidden">
           <Leaf className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold">EcoTrack</span>
+          <span className="text-xl font-bold">EcoSafar</span>
         </div>
         <div className="hidden items-center gap-2 md:flex">
           <Leaf className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold">EcoTrack</span>
+          <span className="text-xl font-bold">EcoSafar</span>
         </div>
         <div className="ml-auto flex items-center gap-4">
           <ModeToggle />

@@ -11,7 +11,7 @@ export default function Home() {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <Leaf className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">EcoTrack</span>
+            <span className="text-xl font-bold">EcoSafar</span>
           </div>
           <div className="flex items-center gap-4">
             <ModeToggle />
@@ -189,10 +189,10 @@ export default function Home() {
         <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
           <div className="flex items-center gap-2">
             <Leaf className="h-6 w-6 text-primary" />
-            <span className="text-lg font-semibold">EcoTrack</span>
+            <span className="text-lg font-semibold">EcoSafar</span>
           </div>
           <p className="text-center text-sm text-muted-foreground md:text-left">
-            &copy; {new Date().getFullYear()} EcoTrack. All rights reserved.
+            &copy; {new Date().getFullYear()} EcoSafar. All rights reserved.
           </p>
           <div className="flex gap-4">
             <Link href="#" className="text-sm text-muted-foreground hover:underline">

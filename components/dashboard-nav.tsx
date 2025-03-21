@@ -27,32 +27,13 @@ const items = [
     href: "/dashboard/scanner",
     icon: QrCode,
   },
-  {
-    title: "Analytics",
-    href: "/dashboard/analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Tips",
-    href: "/dashboard/tips",
-    icon: Leaf,
-  },
-  {
-    title: "Challenges",
-    href: "/dashboard/challenges",
-    icon: Trophy,
-  },
-  {
-    title: "Community",
-    href: "/dashboard/community",
-    icon: Users,
-  },
   
   {
-    title: "Settings",
-    href: "/dashboard/settings",
-    icon: Settings,
+    title: "Tips",
+    href: "/dashboard/recommendation",
+    icon: Leaf,
   },
+
 ]
 
 export function DashboardNav() {
