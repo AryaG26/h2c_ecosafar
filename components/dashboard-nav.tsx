@@ -20,7 +20,7 @@ const items = [
   {
     title: "Electricity",
     href: "/dashboard/electricity",
-    icon: ShoppingBag,
+    icon: Leaf,
   },
   {
     title: "Scanner",
