@@ -3,27 +3,23 @@
 import { useState } from 'react';
 import Tesseract from 'tesseract.js';
 
-
+// Updated emission factors in kg CO2/kWh (source: IEA, Ember, etc.)
 const defaultEmissionFactors = {
-  global: 0.475,  
-  india: 0.82,     
-  usa: 0.43,       
-  eu: 0.23,        
+  global: 0.475,   // Global average (kg CO2/kWh)
+  india: 0.82,     // India (kg CO2/kWh)
+  usa: 0.43,       // United States (kg CO2/kWh)
+  eu: 0.23,        // European Union (kg CO2/kWh)
 };
 
 const ElectricityBillCalculator = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [extractedInfo, setExtractedInfo] = useState({
   const [extractedInfo, setExtractedInfo] = useState({
     name: null,
     billDate: null,
     billedUnits: null,
   });
   const [manualUnits, setManualUnits] = useState<number | null>(null);
-  const [manualUnits, setManualUnits] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
-  const [region, setRegion] = useState('global');
-  const [customEmissionFactor, setCustomEmissionFactor] = useState<number | null>(null);
   const [region, setRegion] = useState('global');
   const [customEmissionFactor, setCustomEmissionFactor] = useState<number | null>(null);
 
@@ -38,11 +34,7 @@ const ElectricityBillCalculator = () => {
     const billDateRegex = /Bill Date:\s*(\d{2}\.\d{2}\.\d{4})/i;
     const billedUnitsRegex = /Billed Units\s*:\s*(\d+)/i;
 
-
     return {
-      name: text.match(nameRegex)?.[1]?.trim() || null,
-      billDate: text.match(billDateRegex)?.[1] || null,
-      billedUnits: text.match(billedUnitsRegex) ? parseInt(text.match(billedUnitsRegex)[1]) : null,
       name: text.match(nameRegex)?.[1]?.trim() || null,
       billDate: text.match(billDateRegex)?.[1] || null,
       billedUnits: text.match(billedUnitsRegex) ? parseInt(text.match(billedUnitsRegex)[1]) : null,
@@ -55,10 +47,7 @@ const ElectricityBillCalculator = () => {
     try {
       const { data: { text } } = await Tesseract.recognize(file, 'eng');
       setExtractedInfo(extractElectricityUsage(text));
-      const { data: { text } } = await Tesseract.recognize(file, 'eng');
-      setExtractedInfo(extractElectricityUsage(text));
     } catch (error) {
-      alert('Error processing the bill.');
       alert('Error processing the bill.');
     } finally {
       setLoading(false);
@@ -68,13 +57,7 @@ const ElectricityBillCalculator = () => {
   const billedUnits = extractedInfo.billedUnits ?? manualUnits;
   const emissionFactor = customEmissionFactor ?? defaultEmissionFactors[region];
   const carbonFootprint = billedUnits ? billedUnits * emissionFactor : null;
-  const billedUnits = extractedInfo.billedUnits ?? manualUnits;
-  const emissionFactor = customEmissionFactor ?? defaultEmissionFactors[region];
-  const carbonFootprint = billedUnits ? billedUnits * emissionFactor : null;
   const recommendations = [
-    'Switch to LED bulbs to save energy.',
-    'Use energy-efficient appliances.',
-    'Consider installing solar panels.',
     'Switch to LED bulbs to save energy.',
     'Use energy-efficient appliances.',
     'Consider installing solar panels.',
@@ -126,7 +109,7 @@ const ElectricityBillCalculator = () => {
             <p><strong>Bill Date:</strong> {extractedInfo.billDate || 'Not found'}</p>
             <p><strong>Billed Units:</strong> {billedUnits} kWh</p>
             <h2 className="text-gray-700 font-bold mt-2">Carbon Footprint:</h2>
-            <p>{carbonFootprint?.toFixed(3)} kg CO2</p>
+            <p>{carbonFootprint?.toFixed(3)} metric tons CO2</p>
             <div className="mt-2">
               <h3 className="text-gray-700 font-bold">Recommendations:</h3>
               <ul className="list-disc pl-5">
