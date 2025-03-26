@@ -5,6 +5,8 @@ import axios from "axios";
 
 const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
+const industries = ["Retail", "Technology", "Manufacturing", "Healthcare", "Finance", "Logistics"];
+
 const RecommendationPage: React.FC = () => {
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -12,35 +14,62 @@ const RecommendationPage: React.FC = () => {
   const [travelCarbonFootprint, setTravelCarbonFootprint] = useState<number>(1500);
   const [energyEmitted, setEnergyEmitted] = useState<number>(900);
   const [foodCarbonEmission, setFoodCarbonEmission] = useState<number>(600);
+  const [industry, setIndustry] = useState<string>("Retail");
   const [chatHistory, setChatHistory] = useState<{ role: string; content: string }[]>([]);
   const [userInput, setUserInput] = useState("");
 
   const generateRecommendations = async () => {
     setLoading(true);
     try {
+      // Determine priority order of carbon sources
+      const sortedEmissions = [
+        { name: "Travel", value: travelCarbonFootprint },
+        { name: "Energy", value: energyEmitted },
+        { name: "Food", value: foodCarbonEmission }
+      ].sort((a, b) => b.value - a.value);
+
+      const highestFactor = sortedEmissions[0].name;
+      const secondHighestFactor = sortedEmissions[1].name;
+      const lowestFactor = sortedEmissions[2].name;
+
       const prompt = `
-        Your task is to develop a personalized recommendation system. You will receive three numerical inputs representing a user's carbon footprint:
+        You are a corporate sustainability advisor generating **industry-specific carbon reduction strategies** for a company in the **${industry}** sector.
+        The company's carbon footprint sources:
+        - **Highest:** ${highestFactor} (${sortedEmissions[0].value})
+        - **Second Highest:** ${secondHighestFactor} (${sortedEmissions[1].value})
+        - **Lowest:** ${lowestFactor} (${sortedEmissions[2].value})
 
-        1. Travel Carbon Footprint: ${travelCarbonFootprint}
-        2. Energy Emitted: ${energyEmitted}
-        3. Food Carbon Emission: ${foodCarbonEmission}
+        **Prioritization Rules:**  
+        - Give **3-4 suggestions** for the highest factor.  
+        - Give **1-2 suggestions** for the second highest.  
+        - Give **1 general tip** covering all factors.
 
-       Based on these inputs, generate **ONLY 6 personalized recommendations** to reduce their carbon footprint.
+        **Industry-Specific Strategy Generation:**  
+        - **Retail:** Focus on **supply chain efficiency, packaging waste, logistics emissions, and energy-efficient stores**.  
+        - **Technology:** Prioritize **server energy efficiency, AI-driven optimization, remote work strategies, and green hardware adoption**.  
+        - **Manufacturing:** Optimize **industrial processes, material sourcing, waste management, and energy usage**.  
+        - **Healthcare:** Reduce **medical waste, optimize energy-intensive equipment, and sustainable procurement**.  
+        - **Finance:** Encourage **carbon-neutral investment policies, remote work, and green office infrastructure**.  
+        - **Logistics:** Focus on **fleet optimization, fuel-efficient routes, and eco-friendly packaging**.  
 
-      **Prioritization rules**:
-      - Identify the highest, second highest, and lowest input values.
-      - Otherwise, allocate 3-4 recommendations to the highest factor.
-      - Allocate 1-2 recommendations to the second highest.
-      - Allocate 1 recommendation** for the lowest factor (or a general tip covering all three).
-        
-      Start with Justifying the suggestions by saying it is based on the highest factor order.
-      Return the response as a clear numbered list based on factor strength without asterisks or bold text.
+        Generate **7 numbered industry-specific recommendations** in the requested priority order.  
+        Each tip should:
+        - **Be highly actionable**
+        - **Include estimated cost savings or ROI**
+        - **Mention regulatory compliance if applicable**
+        - **Use simple, clear language**
+
+        Output format:  
+        1. [Recommendation 1]  
+        2. [Recommendation 2]  
+        3. [Recommendation 3]  
+        (No asterisks or bold text.)
       `;
 
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
       const response = await axios.post(endpoint, {
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.9, maxOutputTokens: 400 },
+        generationConfig: { temperature: 0.8, maxOutputTokens: 600 },
       });
 
       let generatedText = response.data.candidates[0].content.parts[0].text;
@@ -61,14 +90,14 @@ const RecommendationPage: React.FC = () => {
     if (!userInput.trim()) return;
     setChatHistory((prev) => [...prev, { role: "user", content: userInput }]);
     try {
-      const prompt = `User asked: "${userInput}"\n\nRecommendations:\n${recommendations.join("\n")}\n\nProvide a response with clear, numbered suggestions on new lines. Provide relevant and trusted clickable web links whereever possible. `;
-      
+      const prompt = `User (Business in ${industry}) asked: "${userInput}"\n\nCurrent recommendations:\n${recommendations.join("\n")}\n\nProvide a response with clear, numbered business insights on new lines. Mention compliance if applicable. Provide relevant and trusted web links where possible.`;
+
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
       const response = await axios.post(endpoint, {
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { temperature: 0.7, maxOutputTokens: 300 },
       });
-      
+
       const botResponse = response.data.candidates[0].content.parts[0].text;
       setChatHistory((prev) => [...prev, { role: "bot", content: botResponse.replace(/\*/g, "") }]);
       setUserInput("");
@@ -79,20 +108,30 @@ const RecommendationPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold text-center">Personalized Carbon Footprint Reduction Tips</h1>
+      <h1 className="text-3xl font-bold text-center">Business Carbon Footprint Reduction & CSR Advisor</h1>
 
       {loading && <p className="text-center text-gray-600">Loading recommendations...</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
 
+      {/* Recommendations Section */}
       <div className="mx-auto max-w-3xl p-6 bg-white shadow-lg rounded-lg">
+        <h2 className="text-lg font-semibold mb-3">Industry: {industry}</h2>
         {recommendations.map((recommendation, index) => (
           <p key={index} className="mb-2 text-gray-800">{recommendation}</p>
         ))}
       </div>
 
+      {/* Industry Selection & Carbon Emissions Input */}
       <div className="mt-4 p-6 bg-white shadow-lg rounded-lg">
-        <h2 className="text-lg font-semibold mb-3">Please Input your Carbon Emissions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h2 className="text-lg font-semibold mb-3">Customize for Your Business</h2>
+        <label className="block text-sm font-medium text-gray-700">Select Your Industry</label>
+        <select value={industry} onChange={(e) => setIndustry(e.target.value)} className="mt-1 p-2 border rounded-md w-full">
+          {industries.map((ind) => (
+            <option key={ind} value={ind}>{ind}</option>
+          ))}
+        </select>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           {[{ label: "Travel Carbon Footprint", value: travelCarbonFootprint, setter: setTravelCarbonFootprint },
             { label: "Energy Emitted", value: energyEmitted, setter: setEnergyEmitted },
             { label: "Food Carbon Emission", value: foodCarbonEmission, setter: setFoodCarbonEmission }].map(({ label, value, setter }) => (
@@ -102,11 +141,11 @@ const RecommendationPage: React.FC = () => {
             </div>
           ))}
         </div>
+
         <button onClick={generateRecommendations} className="mt-4 bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-lg w-full">
-          Generate Recommendations
+          Generate Reduction Suggestions
         </button>
       </div>
-
       <div className="mt-6 p-6 bg-white shadow-lg rounded-lg">
         <h2 className="text-lg font-semibold">Chat with Green Bot</h2>
         <div className="h-48 overflow-y-auto border p-4 rounded-md bg-gray-50">
