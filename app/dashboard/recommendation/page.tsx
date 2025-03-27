@@ -5,7 +5,7 @@ import axios from "axios";
 
 const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
-const industries = ["Retail", "Technology", "Manufacturing", "Healthcare", "Finance", "Logistics"];
+const industries = ["Retail", "Technology", "Manufacturing", "Healthcare", "Finance", "Logistics", "Personal"];
 
 const RecommendationPage: React.FC = () => {
   const [recommendations, setRecommendations] = useState<string[]>([]);
@@ -32,9 +32,12 @@ const RecommendationPage: React.FC = () => {
       const secondHighestFactor = sortedEmissions[1].name;
       const lowestFactor = sortedEmissions[2].name;
 
-      const prompt = `
-        You are a corporate sustainability advisor generating **industry-specific carbon reduction strategies** for a company in the **${industry}** sector.
-        The company's carbon footprint sources:
+      let prompt = `
+        You are a sustainability advisor generating **carbon reduction strategies** for a ${
+          industry === "Personal" ? "household/individual" : `company in the **${industry}** sector`
+        }.
+        
+        The carbon footprint sources:
         - **Highest:** ${highestFactor} (${sortedEmissions[0].value})
         - **Second Highest:** ${secondHighestFactor} (${sortedEmissions[1].value})
         - **Lowest:** ${lowestFactor} (${sortedEmissions[2].value})
@@ -44,13 +47,23 @@ const RecommendationPage: React.FC = () => {
         - Give **1-2 suggestions** for the second highest.  
         - Give **1 general tip** covering all factors.
 
+        ${
+          industry === "Personal"
+            ? `
+        **Personal Lifestyle Sustainability Tips:**  
+        - Focus on **sustainable travel (public transport, carpooling, cycling, EVs)**  
+        - Reduce **home energy consumption (solar panels, LED lighting, energy-efficient appliances)**  
+        - Optimize **food habits (local produce, plant-based diet, reducing food waste)**  
+        - Suggest **eco-friendly habits (minimalist shopping, recycling, reusing items)**`
+            : `
         **Industry-Specific Strategy Generation:**  
         - **Retail:** Focus on **supply chain efficiency, packaging waste, logistics emissions, and energy-efficient stores**.  
         - **Technology:** Prioritize **server energy efficiency, AI-driven optimization, remote work strategies, and green hardware adoption**.  
         - **Manufacturing:** Optimize **industrial processes, material sourcing, waste management, and energy usage**.  
         - **Healthcare:** Reduce **medical waste, optimize energy-intensive equipment, and sustainable procurement**.  
         - **Finance:** Encourage **carbon-neutral investment policies, remote work, and green office infrastructure**.  
-        - **Logistics:** Focus on **fleet optimization, fuel-efficient routes, and eco-friendly packaging**.  
+        - **Logistics:** Focus on **fleet optimization, fuel-efficient routes, and eco-friendly packaging**.`
+        }
 
         Generate **7 numbered industry-specific recommendations** in the requested priority order.  
         Each tip should:
@@ -84,7 +97,7 @@ const RecommendationPage: React.FC = () => {
 
   useEffect(() => {
     generateRecommendations();
-  }, []);
+  }, [industry]);
 
   const handleChatSubmit = async () => {
     if (!userInput.trim()) return;
@@ -95,7 +108,7 @@ const RecommendationPage: React.FC = () => {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
       const response = await axios.post(endpoint, {
         contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 300 },
+        generationConfig: { temperature: 0.7, maxOutputTokens: 500 },
       });
 
       const botResponse = response.data.candidates[0].content.parts[0].text;
@@ -105,6 +118,7 @@ const RecommendationPage: React.FC = () => {
       console.error("Error in chat:", error);
     }
   };
+
 
   return (
     <div className="flex flex-col gap-6 p-8 bg-gray-100 min-h-screen">
