@@ -11,17 +11,59 @@ const RecommendationPage: React.FC = () => {
   const [recommendations, setRecommendations] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [travelCarbonFootprint, setTravelCarbonFootprint] = useState<number>(1500);
-  const [energyEmitted, setEnergyEmitted] = useState<number>(120.2);
-  const [foodCarbonEmission, setFoodCarbonEmission] = useState<number>(600);
+
+  const [travelCarbonFootprint, setTravelCarbonFootprint] = useState<number>(0);
+  const [energyEmitted, setEnergyEmitted] = useState<number>(0);
+  const [foodCarbonEmission, setFoodCarbonEmission] = useState<number>(0);
   const [industry, setIndustry] = useState<string>("Retail");
   const [chatHistory, setChatHistory] = useState<{ role: string; content: string }[]>([]);
   const [userInput, setUserInput] = useState("");
 
+  // Fetch Travel Emissions Data
+  const fetchTravelSummary = async () => {
+    try {
+      const response = await fetch("/api/summary");
+      if (!response.ok) throw new Error("Failed to fetch travel data");
+      const data = await response.json();
+      return data.totalEmissions || 0;
+    } catch (error) {
+      console.error("Error fetching travel summary:", error);
+      return 0;
+    }
+  };
+
+  // Fetch Food Emissions Data
+  const fetchFoodEmissions = async () => {
+    try {
+      const response = await fetch("/api/foodEmissions");
+      if (!response.ok) throw new Error("Failed to fetch food emissions");
+      const data = await response.json();
+      return data.totalEmissions || 0;
+    } catch (error) {
+      console.error("Error fetching food emissions:", error);
+      return 0;
+    }
+  };
+
+  // Fetch all emissions data when the component mounts
+  useEffect(() => {
+    const fetchData = async () => {
+      const travelEmissions = await fetchTravelSummary();
+      const foodEmissions = await fetchFoodEmissions();
+
+      setTravelCarbonFootprint(travelEmissions);
+      setFoodCarbonEmission(foodEmissions);
+      setEnergyEmitted(120.2);
+
+      setLoading(false);
+    };
+
+    fetchData();
+  }, []);
+
   const generateRecommendations = async () => {
     setLoading(true);
     try {
-      // Determine priority order of carbon sources
       const sortedEmissions = [
         { name: "Travel", value: travelCarbonFootprint },
         { name: "Energy", value: energyEmitted },
@@ -33,44 +75,45 @@ const RecommendationPage: React.FC = () => {
       const lowestFactor = sortedEmissions[2].name;
 
       let prompt = `
-        You are a sustainability advisor generating **carbon reduction strategies** for a ${
-          industry === "Personal" ? "household/individual" : `company in the **${industry}** sector`
-        }.
-        
-        The carbon footprint sources:
-        - **Highest:** ${highestFactor} (${sortedEmissions[0].value})
-        - **Second Highest:** ${secondHighestFactor} (${sortedEmissions[1].value})
-        - **Lowest:** ${lowestFactor} (${sortedEmissions[2].value})
+      You are a sustainability advisor generating **carbon reduction strategies** for a ${
+        industry === "Personal" ? "household/individual" : `company in the **${industry}** sector`
+      }.
 
-        **Prioritization Rules:**  
-        - Give **3-4 suggestions** for the highest factor.  
-        - Give **1-2 suggestions** for the second highest.  
-        - Give **1 general tip** covering all factors.
+      The carbon footprint sources:
+      - **Highest:** ${highestFactor} (${sortedEmissions[0].value})
+      - **Second Highest:** ${secondHighestFactor} (${sortedEmissions[1].value})
+      - **Lowest:** ${lowestFactor} (${sortedEmissions[2].value})
 
-        ${
-          industry === "Personal"
-            ? `
-        **Personal Lifestyle Sustainability Tips:**  
-        - Focus on **sustainable travel (public transport, carpooling, cycling, EVs)**  
-        - Reduce **home energy consumption (solar panels, LED lighting, energy-efficient appliances)**  
-        - Optimize **food habits (local produce, plant-based diet, reducing food waste)**  
-        - Suggest **eco-friendly habits (minimalist shopping, recycling, reusing items)**`
-            : `
-        **Industry-Specific Strategy Generation:**  
-        - **Retail:** Focus on **supply chain efficiency, packaging waste, logistics emissions, and energy-efficient stores**.  
-        - **Technology:** Prioritize **server energy efficiency, AI-driven optimization, remote work strategies, and green hardware adoption**.  
-        - **Manufacturing:** Optimize **industrial processes, material sourcing, waste management, and energy usage**.  
-        - **Healthcare:** Reduce **medical waste, optimize energy-intensive equipment, and sustainable procurement**.  
-        - **Finance:** Encourage **carbon-neutral investment policies, remote work, and green office infrastructure**.  
-        - **Logistics:** Focus on **fleet optimization, fuel-efficient routes, and eco-friendly packaging**.`
-        }
+      **Prioritization Rules:**  
+      - Give **3-4 suggestions** for the highest factor.  
+      - Give **1-2 suggestions** for the second highest.  
+      - Give **1 general tip** covering all factors.
 
-        Generate **7 numbered industry-specific recommendations** in the requested priority order.  
-        Each tip should:
-        - **Be highly actionable**
-        - **Include estimated cost savings or ROI**
-        - **Mention regulatory compliance if applicable**
-        - **Use simple, clear language**
+      ${
+        industry === "Personal"
+          ? `
+      **Personal Lifestyle Sustainability Tips:**  
+      - Focus on **sustainable travel (public transport, carpooling, cycling, EVs)**  
+      - Reduce **home energy consumption (solar panels, LED lighting, energy-efficient appliances)**  
+      - Optimize **food habits (local produce, plant-based diet, reducing food waste)**  
+      - Suggest **eco-friendly habits (minimalist shopping, recycling, reusing items)**`
+          : `
+      **Industry-Specific Strategy Generation:**  
+      - **Retail:** Focus on **supply chain efficiency, packaging waste, logistics emissions, and energy-efficient stores**.  
+      - **Technology:** Prioritize **server energy efficiency, AI-driven optimization, remote work strategies, and green hardware adoption**.  
+      - **Manufacturing:** Optimize **industrial processes, material sourcing, waste management, and energy usage**.  
+      - **Healthcare:** Reduce **medical waste, optimize energy-intensive equipment, and sustainable procurement**.  
+      - **Finance:** Encourage **carbon-neutral investment policies, remote work, and green office infrastructure**.  
+      - **Logistics:** Focus on **fleet optimization, fuel-efficient routes, and eco-friendly packaging**.`
+      }
+
+      Generate **7 numbered industry-specific recommendations** in the requested priority order.  
+      Each tip should:
+      - **Be highly actionable**
+      - **Include estimated cost savings or ROI**
+      - **Mention regulatory compliance if applicable**
+      - **Use simple, clear language**
+      
 
         Output format:  
         1. [Recommendation 1]  
@@ -97,8 +140,7 @@ const RecommendationPage: React.FC = () => {
 
   useEffect(() => {
     generateRecommendations();
-  }, [industry]);
-
+  }, [industry, travelCarbonFootprint, energyEmitted, foodCarbonEmission]);
   const handleChatSubmit = async () => {
     if (!userInput.trim()) return;
     setChatHistory((prev) => [...prev, { role: "user", content: userInput }]);
@@ -127,7 +169,6 @@ const RecommendationPage: React.FC = () => {
       {loading && <p className="text-center text-gray-600">Loading recommendations...</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
 
-      {/* Recommendations Section */}
       <div className="mx-auto max-w-3xl p-6 bg-white shadow-lg rounded-lg">
         <h2 className="text-lg font-semibold mb-3">Industry: {industry}</h2>
         {recommendations.map((recommendation, index) => (
@@ -135,7 +176,6 @@ const RecommendationPage: React.FC = () => {
         ))}
       </div>
 
-      {/* Industry Selection & Carbon Emissions Input */}
       <div className="mt-4 p-6 bg-white shadow-lg rounded-lg">
         <h2 className="text-lg font-semibold mb-3">Customize for Your Advisor</h2>
         <label className="block text-sm font-medium text-gray-700">Select Your Industry</label>
@@ -146,16 +186,17 @@ const RecommendationPage: React.FC = () => {
         </select>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          {[{ label: "Travel Carbon Footprint", value: travelCarbonFootprint, setter: setTravelCarbonFootprint },
-            { label: "Energy Emitted", value: energyEmitted, setter: setEnergyEmitted },
-            { label: "Food Carbon Emission", value: foodCarbonEmission, setter: setFoodCarbonEmission }].map(({ label, value, setter }) => (
+          {[{ label: "Travel Carbon Footprint", value: travelCarbonFootprint },
+            { label: "Energy Emitted", value: energyEmitted },
+            { label: "Food Carbon Emission", value: foodCarbonEmission }].map(({ label, value }) => (
             <div key={label}>
               <label className="block text-sm font-medium text-gray-700">{label}</label>
-              <input type="number" value={value} onChange={(e) => setter(Number(e.target.value))} className="mt-1 p-2 border rounded-md w-full" />
+              <input type="number" value={value} readOnly className="mt-1 p-2 border rounded-md w-full bg-gray-200" />
             </div>
           ))}
         </div>
 
+        
         <button onClick={generateRecommendations} className="mt-4 bg-green-600 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-lg w-full">
           Generate Reduction Suggestions
         </button>
