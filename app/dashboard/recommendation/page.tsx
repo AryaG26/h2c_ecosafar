@@ -12,7 +12,7 @@ const RecommendationPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [travelCarbonFootprint, setTravelCarbonFootprint] = useState<number>(1500);
-  const [energyEmitted, setEnergyEmitted] = useState<number>(900);
+  const [energyEmitted, setEnergyEmitted] = useState<number>(120.2);
   const [foodCarbonEmission, setFoodCarbonEmission] = useState<number>(600);
   const [industry, setIndustry] = useState<string>("Retail");
   const [chatHistory, setChatHistory] = useState<{ role: string; content: string }[]>([]);
@@ -103,7 +103,7 @@ const RecommendationPage: React.FC = () => {
     if (!userInput.trim()) return;
     setChatHistory((prev) => [...prev, { role: "user", content: userInput }]);
     try {
-      const prompt = `User (Business in ${industry}) asked: "${userInput}"\n\nCurrent recommendations:\n${recommendations.join("\n")}\n\nProvide a response with clear, numbered business insights on new lines. Mention compliance if applicable. Provide relevant and trusted web links where possible.`;
+      const prompt = `User (Business in ${industry}) asked: "${userInput}"\n\nCurrent recommendations:\n${recommendations.join("\n")}\n\nProvide a response with clear, numbered business insights on new lines. Mention compliance if applicable. Inlcude relevant web links where possible.`;
 
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${API_KEY}`;
       const response = await axios.post(endpoint, {
@@ -122,7 +122,7 @@ const RecommendationPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-6 p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold text-center">Business Carbon Footprint Reduction & CSR Advisor</h1>
+      <h1 className="text-3xl font-bold text-center">Carbon Footprint Reduction Suggestor & CSR Advisor</h1>
 
       {loading && <p className="text-center text-gray-600">Loading recommendations...</p>}
       {error && <p className="text-center text-red-500">{error}</p>}
@@ -137,7 +137,7 @@ const RecommendationPage: React.FC = () => {
 
       {/* Industry Selection & Carbon Emissions Input */}
       <div className="mt-4 p-6 bg-white shadow-lg rounded-lg">
-        <h2 className="text-lg font-semibold mb-3">Customize for Your Business</h2>
+        <h2 className="text-lg font-semibold mb-3">Customize for Your Advisor</h2>
         <label className="block text-sm font-medium text-gray-700">Select Your Industry</label>
         <select value={industry} onChange={(e) => setIndustry(e.target.value)} className="mt-1 p-2 border rounded-md w-full">
           {industries.map((ind) => (

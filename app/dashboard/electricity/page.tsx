@@ -6,7 +6,7 @@ import Tesseract from 'tesseract.js';
 // Updated emission factors in kg CO2/kWh (source: IEA, Ember, etc.)
 const defaultEmissionFactors = {
   global: 0.475,   // Global average (kg CO2/kWh)
-  india: 0.82,     // India (kg CO2/kWh)
+  india: 0.42,     // India (kg CO2/kWh)
   usa: 0.43,       // United States (kg CO2/kWh)
   eu: 0.23,        // European Union (kg CO2/kWh)
 };
@@ -109,7 +109,7 @@ const ElectricityBillCalculator = () => {
             <p><strong>Bill Date:</strong> {extractedInfo.billDate || 'Not found'}</p>
             <p><strong>Billed Units:</strong> {billedUnits} kWh</p>
             <h2 className="text-gray-700 font-bold mt-2">Carbon Footprint:</h2>
-            <p>{carbonFootprint?.toFixed(3)} metric tons CO2</p>
+            <p>{carbonFootprint?.toFixed(3)} kg CO₂e</p>
             <div className="mt-2">
               <h3 className="text-gray-700 font-bold">Recommendations:</h3>
               <ul className="list-disc pl-5">

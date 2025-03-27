@@ -52,12 +52,12 @@ export default function DashboardPage() {
 
   const carbonData = {
     daily: {
-      total: travelData.totalEmissions + foodEmissions + 6.59,
+      total: travelData.totalEmissions + foodEmissions + 101.2,
       target: 15,
       breakdown: [
         { category: "Travel", value: travelData.totalEmissions, icon: Car, color: "text-blue-500" },
         { category: "Food", value: foodEmissions, icon: Utensils, color: "text-orange-500" },
-        { category: "Energy", value: 2.1, icon: Battery, color: "text-yellow-500" },
+        { category: "Energy", value: 101.2, icon: Battery, color: "text-yellow-500" },
       ],
     },
   };
